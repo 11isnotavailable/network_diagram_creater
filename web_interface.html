@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络拓扑图生成器</title>
+    <!-- 引入CodeMirror实现JSON编辑器 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/json-lint.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #4a6baf;
+            --secondary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+        }
+        
+        .input-section h2, .result-section h2 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+        
+        #editor {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-height: 400px;
+            margin-bottom: 1rem;
+        }
+        
+        .CodeMirror {
+            height: 500px !important;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: var(--primary-color);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        #generate-btn {
+            background-color: var(--success-color);
+        }
+        
+        #generate-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .template-btn {
+            background-color: var(--secondary-color);
+            margin-right: 0.5rem;
+        }
+        
+        .result-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background-color: #f9f9f9;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        #loader {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .templates {
+            margin-top: 1rem;
+        }
+        
+        .templates h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: var(--secondary-color);
+        }
+        
+        .download-btn {
+            display: none;
+            margin-top: 1rem;
+            background-color: var(--primary-color);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>网络拓扑图生成器</h1>
+    </header>
+    
+    <main>
+        <section class="input-section card">
+            <h2>配置输入</h2>
+            <div id="editor"></div>
+            
+            <div class="templates">
+                <h3>选择模板:</h3>
+                <button class="template-btn" data-template="simple">简单网络</button>
+                <button class="template-btn" data-template="enterprise">企业网络</button>
+                <button class="template-btn" data-template="cloud">云架构</button>
+            </div>
+            
+            <div class="buttons">
+                <button id="validate-btn">验证JSON</button>
+                <button id="generate-btn">生成拓扑图</button>
+            </div>
+            
+            <div id="status-message" class="status-message"></div>
+        </section>
+        
+        <section class="result-section card">
+            <h2>生成结果</h2>
+            <div class="image-container">
+                <div id="loader"></div>
+                <div id="placeholder-message">网络拓扑图将显示在此处</div>
+                <img id="result-image" style="display: none;" />
+            </div>
+            <button id="download-btn" class="download-btn">下载图片</button>
+        </section>
+    </main>
+    
+    <div class="footer">
+        <p>网络拓扑图生成工具 | 基于 diagrams 库和 Python API</p>
+    </div>
+    
+    <script>
+        // 初始化代码编辑器
+        const editor = CodeMirror(document.getElementById("editor"), {
+            mode: "application/json",
+            theme: "dracula",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            tabSize: 2,
+            gutters: ["CodeMirror-lint-markers"],
+            lint: true
+        });
+        
+        // 预设模板
+        const templates = {
+            simple: {
+                "title": "简单网络拓扑",
+                "outformat": "png",
+                "direction": "TB",
+                "nodes": [
+                    {
+                        "id": "internet",
+                        "label": "互联网",
+                        "icon": "internet"
+                    },
+                    {
+                        "id": "router",
+                        "label": "路由器",
+                        "icon": "router"
+                    }
+                ],
+                "clusters": [
+                    {
+                        "name": "内部网络",
+                        "subnet": "192.168.1.0/24",
+                        "nodes": [
+                            {
+                                "id": "server",
+                                "label": "服务器",
+                                "icon": "server"
+                            },
+                            {
+                                "id": "client",
+                                "label": "客户端",
+                                "icon": "client"
+                            }
+                        ]
+                    }
+                ],
+                "connections": [
+                    {
+                        "from": "internet",
+                        "to": "router"
+                    },
+                    {
+                        "from": "router",
+                        "to": "server"
+                    },
+                    {
+                        "from": "client",
+                        "to": "server",
+                        "bidirectional": true
+                    }
+                ]
+            },
+            enterprise: {
+                "title": "企业网络拓扑",
+                "outformat": "png",
+                "direction": "TB",
+                "nodes": [
+                    {
+                        "id": "internet",
+                        "label": "互联网",
+                        "icon": "internet"
+                    }
+                ],
+                "clusters": [
+                    {
+                        "name": "边界区域",
+                        "subnet": "192.168.1.0/24",
+                        "nodes": [
+                            {
+                                "id": "firewall",
+                                "label": "防火墙",
+                                "icon": "firewall"
+                            },
+                            {
+                                "id": "router",
+                                "label": "边界路由器",
+                                "icon": "router"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "内部网络",
+                        "subnet": "10.0.0.0/8",
+                        "nodes": [
+                            {
+                                "id": "core_switch",
+                                "label": "核心交换机",
+                                "icon": "switch"
+                            }
+                        ],
+                        "clusters": [
+                            {
+                                "name": "服务器区域",
+                                "subnet": "10.1.0.0/16",
+                                "nodes": [
+                                    {
+                                        "id": "web_server",
+                                        "label": "Web服务器",
+                                        "icon": "server"
+                                    },
+                                    {
+                                        "id": "db_server",
+                                        "label": "数据库服务器",
+                                        "icon": "server"
+                                    },
+                                    {
+                                        "id": "mail_server",
+                                        "label": "邮件服务器",
+                                        "icon": "smtp_server"
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "办公区域",
+                                "subnet": "10.2.0.0/16",
+                                "nodes": [
+                                    {
+                                        "id": "dept_switch",
+                                        "label": "部门交换机",
+                                        "icon": "switch"
+                                    },
+                                    {
+                                        "id": "user1",
+                                        "label": "员工1",
+                                        "icon": "user"
+                                    },
+                                    {
+                                        "id": "user2",
+                                        "label": "员工2",
+                                        "icon": "user"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "connections": [
+                    {
+                        "from": "internet",
+                        "to": "firewall"
+                    },
+                    {
+                        "from": "firewall",
+                        "to": "router"
+                    },
+                    {
+                        "from": "router",
+                        "to": "core_switch"
+                    },
+                    {
+                        "from": "core_switch",
+                        "to": "web_server"
+                    },
+                    {
+                        "from": "web_server",
+                        "to": "db_server"
+                    },
+                    {
+                        "from": "core_switch",
+                        "to": "mail_server"
+                    },
+                    {
+                        "from": "core_switch",
+                        "to": "dept_switch"
+                    },
+                    {
+                        "from": "dept_switch",
+                        "to": "user1"
+                    },
+                    {
+                        "from": "dept_switch",
+                        "to": "user2"
+                    }
+                ]
+            },
+            cloud: {
+                "title": "云服务架构",
+                "outformat": "png",
+                "direction": "LR",
+                "nodes": [
+                    {
+                        "id": "internet",
+                        "label": "互联网",
+                        "icon": "internet"
+                    },
+                    {
+                        "id": "waf",
+                        "label": "Web应用防火墙",
+                        "icon": "waf"
+                    }
+                ],
+                "clusters": [
+                    {
+                        "name": "负载均衡层",
+                        "nodes": [
+                            {
+                                "id": "lb",
+                                "label": "负载均衡器",
+                                "icon": "switch"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Web服务层",
+                        "nodes": [
+                            {
+                                "id": "web1",
+                                "label": "Web服务器 1",
+                                "icon": "server"
+                            },
+                            {
+                                "id": "web2",
+                                "label": "Web服务器 2",
+                                "icon": "server"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "数据层",
+                        "nodes": [
+                            {
+                                "id": "db_primary",
+                                "label": "主数据库",
+                                "icon": "server"
+                            },
+                            {
+                                "id": "db_replica",
+                                "label": "从数据库",
+                                "icon": "server"
+                            }
+                        ]
+                    }
+                ],
+                "connections": [
+                    {
+                        "from": "internet",
+                        "to": "waf"
+                    },
+                    {
+                        "from": "waf",
+                        "to": "lb"
+                    },
+                    {
+                        "from": "lb",
+                        "to": "web1"
+                    },
+                    {
+                        "from": "lb",
+                        "to": "web2"
+                    },
+                    {
+                        "from": "web1",
+                        "to": "db_primary"
+                    },
+                    {
+                        "from": "web2",
+                        "to": "db_primary"
+                    },
+                    {
+                        "from": "db_primary",
+                        "to": "db_replica",
+                        "style": "dashed"
+                    }
+                ]
+            }
+        };
+        
+        // 设置默认模板
+        editor.setValue(JSON.stringify(templates.simple, null, 2));
+        
+        // 获取元素引用
+        const validateBtn = document.getElementById('validate-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const statusMessage = document.getElementById('status-message');
+        const resultImage = document.getElementById('result-image');
+        const placeholderMessage = document.getElementById('placeholder-message');
+        const loader = document.getElementById('loader');
+        const downloadBtn = document.getElementById('download-btn');
+        
+        // API地址
+        const apiUrl = 'http://localhost:5000/generate';
+        
+        // 验证JSON
+        validateBtn.addEventListener('click', () => {
+            try {
+                const jsonValue = editor.getValue();
+                JSON.parse(jsonValue);
+                showStatus('JSON格式有效!', 'success');
+            } catch (e) {
+                showStatus(`JSON格式错误: ${e.message}`, 'error');
+            }
+        });
+        
+        // 生成拓扑图
+        generateBtn.addEventListener('click', async () => {
+            try {
+                // 验证JSON
+                const jsonValue = editor.getValue();
+                const config = JSON.parse(jsonValue);
+                
+                // 显示加载动画
+                loader.style.display = 'block';
+                placeholderMessage.style.display = 'none';
+                resultImage.style.display = 'none';
+                generateBtn.disabled = true;
+                
+                // 发送请求到API
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: jsonValue
+                });
+                
+                // 隐藏加载动画
+                loader.style.display = 'none';
+                generateBtn.disabled = false;
+                
+                if (response.ok) {
+                    // 获取图像Blob
+                    const blob = await response.blob();
+                    
+                    // 创建图像URL
+                    const imageUrl = URL.createObjectURL(blob);
+
+                    // 根据格式不同处理
+                    if (config.outformat === 'svg') {
+                        // 对于SVG，使用嵌入方式
+                        const svgText = await blob.text();
+                        const container = document.querySelector('.image-container');
+                        container.innerHTML = svgText;
+                        resultImage.style.display = 'none';
+                    } else {
+                        // 对于PNG等其他格式，使用img标签
+                        resultImage.src = imageUrl;
+                        resultImage.style.display = 'block';
+                    }
+                    downloadBtn.style.display = 'block';
+                    
+                    // 配置下载按钮
+                    downloadBtn.addEventListener('click', () => {
+                        const a = document.createElement('a');
+                        a.href = imageUrl;
+                        a.download = `network_diagram.${config.outformat || 'png'}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    });
+                    
+                    showStatus('拓扑图生成成功!', 'success');
+                } else {
+                    // 显示错误信息
+                    const errorData = await response.json();
+                    showStatus(`生成失败: ${errorData.error || response.statusText}`, 'error');
+                    placeholderMessage.style.display = 'block';
+                }
+            } catch (e) {
+                loader.style.display = 'none';
+                generateBtn.disabled = false;
+                showStatus(`发生错误: ${e.message}`, 'error');
+                placeholderMessage.style.display = 'block';
+            }
+        });
+        
+        // 模板按钮事件
+        document.querySelectorAll('.template-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const templateName = btn.dataset.template;
+                if (templates[templateName]) {
+                    editor.setValue(JSON.stringify(templates[templateName], null, 2));
+                    showStatus(`已加载${btn.textContent}模板`, 'success');
+                }
+            });
+        });
+        
+        // 显示状态消息
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message';
+            statusMessage.classList.add(type);
+            
+            // 5秒后自动隐藏成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html> 

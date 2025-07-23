@@ -1,0 +1,169 @@
+# 企业网络拓扑 YAML配置
+title: 企业网络拓扑 (半复杂版-本地图标)
+output_filename: yaml_generated_topology
+outformat: svg
+direction: TB
+
+# 图表属性
+graph_attr:
+  fontsize: '12'
+  bgcolor: transparent
+  splines: ortho
+
+# 节点属性
+node_attr:
+  fontsize: '20'
+  height: '0.8'
+  width: '0.8'
+  fixedsize: 'true'
+  imagescale: 'true'
+
+# 主层级节点
+nodes:
+  - id: internet
+    label: 公网 / Internet
+    icon: internet
+  - id: core_router
+    label: 核心路由器
+    icon: router
+
+# 区域/集群
+clusters:
+  # 边界区
+  - name: 边界区
+    subnet: 192.168.1.0/24
+    nodes:
+      - id: firewall
+        label: 主防火墙
+        icon: firewall
+      - id: nat_gateway
+        label: NAT网关
+        icon: switch
+
+  # 内部网络
+  - name: 内部网络
+    subnet: 10.0.0.0/8
+    nodes:
+      - id: core_switch
+        label: 核心交换机 (三层)
+        icon: switch
+    
+    # 内部网络子区域
+    clusters:
+      # 基础服务区域
+      - name: 内部网络 基础服务
+        subnet: 10.0.0.0/22
+        nodes:
+          - id: ad_dc
+            label: AD DC
+            icon: activedirectory
+          - id: dns_server
+            label: DNS Server
+            icon: coredns
+          - id: smtp_server
+            label: SMTP Server
+            icon: smtp_server
+          - id: jump_server
+            label: Jump Server\n(堡垒机)
+            icon: server
+      
+      # 内部服务区域
+      - name: 内部网络 内部服务
+        subnet: 10.8.1.0/24
+        nodes:
+          - id: waf
+            label: WAF / 反代
+            icon: waf
+          - id: app_server
+            label: 应用服务器
+            icon: server
+          - id: db_server
+            label: 数据库服务器
+            icon: server
+      
+      # 办公区
+      - name: 内部网络 办公区
+        subnet: 10.16.1.0/24
+        nodes:
+          - id: office_switch
+            label: 办公区接入交换机
+            icon: switch
+          - id: pc
+            label: 办公电脑
+            icon: client
+          - id: user
+            label: 员工
+            icon: user
+
+  # 访客网络
+  - name: 访客网络
+    subnet: 172.16.0.0/14
+    nodes:
+      - id: visitor_firewall
+        label: 访客区防火墙
+        icon: firewall
+      - id: portal
+        label: Portal认证
+        icon: portal
+      - id: wifi_ap
+        label: WiFi AP
+        icon: switch
+      - id: visitors
+        label: 访客
+        icon: users
+
+# 连接
+connections:
+  # Internet 到边界区
+  - from: internet
+    to: firewall
+  - from: firewall
+    to: nat_gateway
+  - from: nat_gateway
+    to: core_router
+  - from: core_router
+    to: core_switch
+  
+  # 内部网络基础服务连接
+  - from: core_switch
+    to: ad_dc
+    color: darkgreen
+  - from: core_switch
+    to: dns_server
+    color: darkgreen
+  - from: core_switch
+    to: smtp_server
+    color: darkgreen
+  - from: core_switch
+    to: jump_server
+    color: darkgreen
+  
+  # 内部服务连接
+  - from: core_switch
+    to: waf
+    color: blue
+  - from: waf
+    to: app_server
+  - from: app_server
+    to: db_server
+  
+  # 办公区连接
+  - from: core_switch
+    to: office_switch
+    color: purple
+  - from: office_switch
+    to: pc
+  - from: user
+    to: pc
+    bidirectional: true
+  
+  # 访客网络连接
+  - from: core_router
+    to: visitor_firewall
+  - from: visitor_firewall
+    to: portal
+  - from: portal
+    to: wifi_ap
+  - from: wifi_ap
+    to: visitors
+    bidirectional: true 
