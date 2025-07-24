@@ -277,7 +277,7 @@
         const templates = {
             simple: {
                 "title": "简单网络拓扑",
-                "outformat": "png",
+                "outformat": "svg", // 改为svg格式
                 "direction": "TB",
                 "nodes": [
                     {
@@ -327,7 +327,7 @@
             },
             enterprise: {
                 "title": "企业网络拓扑",
-                "outformat": "png",
+                "outformat": "svg", // 改为svg格式
                 "direction": "TB",
                 "nodes": [
                     {
@@ -450,7 +450,7 @@
             },
             cloud: {
                 "title": "云服务架构",
-                "outformat": "png",
+                "outformat": "svg", // 改为svg格式
                 "direction": "LR",
                 "nodes": [
                     {
@@ -573,6 +573,11 @@
                 const jsonValue = editor.getValue();
                 const config = JSON.parse(jsonValue);
                 
+                // 检查格式，显示警告如果不是SVG
+                if (config.outformat !== 'svg') {
+                    showStatus('警告: 使用非SVG格式可能导致图标无法正确显示。建议使用 "outformat": "svg"', 'error');
+                }
+                
                 // 显示加载动画
                 loader.style.display = 'block';
                 placeholderMessage.style.display = 'none';
@@ -593,42 +598,64 @@
                 generateBtn.disabled = false;
                 
                 if (response.ok) {
-                    // 获取图像Blob
+                    // 获取响应数据
                     const blob = await response.blob();
-                    
-                    // 创建图像URL
                     const imageUrl = URL.createObjectURL(blob);
-
-                    // 根据格式不同处理
+                    
+                    // 根据不同格式处理显示
                     if (config.outformat === 'svg') {
-                        // 对于SVG，使用嵌入方式
+                        // 对于SVG，使用嵌入方式以确保正确渲染
                         const svgText = await blob.text();
                         const container = document.querySelector('.image-container');
+                        
+                        // 保存原始内容，以便可以恢复占位符
+                        if (!container.dataset.originalContent) {
+                            container.dataset.originalContent = container.innerHTML;
+                        }
+                        
+                        // 清除容器内容并直接插入SVG
                         container.innerHTML = svgText;
+                        
+                        // 确保SVG可以自适应容器
+                        const svgElement = container.querySelector('svg');
+                        if (svgElement) {
+                            svgElement.style.width = '100%';
+                            svgElement.style.height = 'auto';
+                            svgElement.style.maxHeight = '500px';
+                        }
+                        
                         resultImage.style.display = 'none';
                     } else {
-                        // 对于PNG等其他格式，使用img标签
+                        // 对于其他格式，使用img标签
                         resultImage.src = imageUrl;
                         resultImage.style.display = 'block';
                     }
+                    
                     downloadBtn.style.display = 'block';
                     
                     // 配置下载按钮
-                    downloadBtn.addEventListener('click', () => {
+                    downloadBtn.onclick = () => {
                         const a = document.createElement('a');
                         a.href = imageUrl;
                         a.download = `network_diagram.${config.outformat || 'png'}`;
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
-                    });
+                    };
                     
                     showStatus('拓扑图生成成功!', 'success');
                 } else {
                     // 显示错误信息
                     const errorData = await response.json();
                     showStatus(`生成失败: ${errorData.error || response.statusText}`, 'error');
-                    placeholderMessage.style.display = 'block';
+                    
+                    // 恢复占位符
+                    const container = document.querySelector('.image-container');
+                    if (container.dataset.originalContent) {
+                        container.innerHTML = container.dataset.originalContent;
+                    } else {
+                        placeholderMessage.style.display = 'block';
+                    }
                 }
             } catch (e) {
                 loader.style.display = 'none';
