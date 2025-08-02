@@ -29,7 +29,7 @@ python api_service.py
 - 请求体: JSON格式的拓扑图配置
 
 **响应**:
-- 成功: 返回生成的图像文件（默认为PNG格式）
+- 成功: 返回包含文件信息的JSON对象
 - 失败: 返回包含错误信息的JSON对象和相应的HTTP状态码
 
 ### 健康检查
@@ -48,8 +48,7 @@ python api_service.py
 ```bash
 curl -X POST http://localhost:5000/generate \
      -H "Content-Type: application/json" \
-     -d @your_config.json \
-     --output network_diagram.png
+     -d @your_config.json
 ```
 
 ### 使用Python发送请求
@@ -68,13 +67,34 @@ response = requests.post(
     json=config
 )
 
-# 保存返回的图像
+# 处理返回结果
 if response.status_code == 200:
-    with open('network_diagram.png', 'wb') as f:
-        f.write(response.content)
-    print('图表已保存为network_diagram.png')
+    result = response.json()
+    print(f'图表生成成功: {result["file_name"]}')
+    print(f'文件路径: {result["file_path"]}')
+    print(f'文件格式: {result["format"]}')
 else:
     print(f'错误: {response.json()}')
+```
+
+### 响应格式示例
+
+成功响应:
+```json
+{
+  "success": true,
+  "message": "图表生成成功",
+  "file_path": "D:/network_diagrams/diagram_ad5989e7-3965-45b8-a2f2-2f9681367395.svg",
+  "file_name": "diagram_ad5989e7-3965-45b8-a2f2-2f9681367395.svg",
+  "format": "svg"
+}
+```
+
+失败响应:
+```json
+{
+  "error": "错误信息描述"
+}
 ```
 
 ## JSON配置格式

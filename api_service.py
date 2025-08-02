@@ -47,11 +47,14 @@ def generate_diagram_api():
         if not os.path.exists(output_file):
             return jsonify({"error": "图表生成失败"}), 500
         
-        # 打开生成的图像文件并以二进制流返回
-        return send_file(output_file, 
-                        mimetype=f'image/{output_format}',
-                        as_attachment=True,
-                        download_name=f"network_diagram.{output_format}")
+        # 返回图片的存储路径信息
+        return jsonify({
+            "success": True,
+            "message": "图表生成成功",
+            "file_path": output_file,
+            "file_name": f"diagram_{unique_id}.{output_format}",
+            "format": output_format
+        }) 
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -83,7 +86,7 @@ def index():
             <div class="endpoint">
                 <h2>API端点:</h2>
                 <code>POST /generate</code>
-                <p>提交JSON配置数据以生成网络拓扑图</p>
+                <p>提交JSON配置数据以生成网络拓扑图，返回文件信息</p>
             </div>
             
             <h2>请求示例:</h2>
