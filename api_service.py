@@ -14,7 +14,7 @@ app = Flask(__name__)
 CORS(app)  # 启用CORS支持，允许所有域的跨域请求
 
 # 图像输出目录，临时存储生成的图像
-OUTPUT_DIR = os.path.join(tempfile.gettempdir(), "network_diagrams")
+OUTPUT_DIR = "D:/network_diagrams"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 @app.route('/generate', methods=['POST'])
@@ -138,6 +138,6 @@ curl -X POST http://localhost:5000/generate \\
 
 if __name__ == '__main__':
     # 默认端口5000
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5050))
     # 在开发环境中使用debug=True，生产环境中应设置为False
     app.run(host='0.0.0.0', port=port, debug=True) 

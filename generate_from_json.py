@@ -50,6 +50,8 @@ def generate_diagram(config):
                 node_id = node_def.get("id")
                 node_label = node_def.get("label", node_id)
                 node_icon = node_def.get("icon")
+                node_ip = node_def.get("ip", "")
+                node_docker_image = node_def.get("image", "")
                 
                 # Skip nodes without ID or icon
                 if not node_id or not node_icon:
@@ -63,8 +65,17 @@ def generate_diagram(config):
                     print(f"⚠️ Icon not found: {icon_path}, using default server.svg")
                     icon_path = os.path.join(icons_dir, "server.svg")
                 
+                # Create label with IP address and Docker image if provided
+                display_parts = [node_label]
+                if node_ip:
+                    display_parts.append(node_ip)
+                if node_docker_image:
+                    display_parts.append(f"镜像: {node_docker_image}")
+                
+                display_label = "\n".join(display_parts)
+                
                 # Create the node
-                node = Custom(node_label, icon_path=icon_path)
+                node = Custom(display_label, icon_path=icon_path)
                 node_registry[node_id] = node
             
             # Process clusters and their nodes
@@ -79,6 +90,8 @@ def generate_diagram(config):
                         node_id = node_def.get("id")
                         node_label = node_def.get("label", node_id)
                         node_icon = node_def.get("icon")
+                        node_ip = node_def.get("ip", "")
+                        node_docker_image = node_def.get("image", "")
                         
                         # Skip nodes without ID or icon
                         if not node_id or not node_icon:
@@ -92,8 +105,17 @@ def generate_diagram(config):
                             print(f"⚠️ Icon not found: {icon_path}, using default server.svg")
                             icon_path = os.path.join(icons_dir, "server.svg")
                         
+                        # Create label with IP address and Docker image if provided
+                        display_parts = [node_label]
+                        if node_ip:
+                            display_parts.append(node_ip)
+                        if node_docker_image:
+                            display_parts.append(f"镜像: {node_docker_image}")
+                        
+                        display_label = "\n".join(display_parts)
+                        
                         # Create the node
-                        node = Custom(node_label, icon_path=icon_path)
+                        node = Custom(display_label, icon_path=icon_path)
                         node_registry[node_id] = node
                     
                     # Process nested clusters
@@ -139,6 +161,8 @@ def process_nested_cluster(cluster_def, icons_dir, node_registry):
             node_id = node_def.get("id")
             node_label = node_def.get("label", node_id)
             node_icon = node_def.get("icon")
+            node_ip = node_def.get("ip", "")
+            node_docker_image = node_def.get("image", "")
             
             # Skip nodes without ID or icon
             if not node_id or not node_icon:
@@ -152,8 +176,17 @@ def process_nested_cluster(cluster_def, icons_dir, node_registry):
                 print(f"⚠️ Icon not found: {icon_path}, using default server.svg")
                 icon_path = os.path.join(icons_dir, "server.svg")
             
+            # Create label with IP address and Docker image if provided
+            display_parts = [node_label]
+            if node_ip:
+                display_parts.append(node_ip)
+            if node_docker_image:
+                display_parts.append(f"镜像: {node_docker_image}")
+            
+            display_label = "\n".join(display_parts)
+            
             # Create the node
-            node = Custom(node_label, icon_path=icon_path)
+            node = Custom(display_label, icon_path=icon_path)
             node_registry[node_id] = node
         
         # Recursively process nested clusters

@@ -24,7 +24,8 @@
     {
       "id": "core_router",
       "label": "核心路由器",
-      "icon": "router"
+      "icon": "router",
+      "ip": "192.168.1.1"
     }
   ],
   "clusters": [
@@ -35,12 +36,14 @@
         {
           "id": "firewall",
           "label": "主防火墙",
-          "icon": "firewall"
+          "icon": "firewall",
+          "ip": "192.168.1.10"
         },
         {
           "id": "nat_gateway",
           "label": "NAT网关",
-          "icon": "switch"
+          "icon": "switch",
+          "ip": "192.168.1.11"
         }
       ]
     },
@@ -51,7 +54,8 @@
         {
           "id": "core_switch",
           "label": "核心交换机 (三层)",
-          "icon": "switch"
+          "icon": "switch",
+          "ip": "10.0.0.1"
         }
       ],
       "clusters": [
@@ -62,22 +66,26 @@
             {
               "id": "ad_dc",
               "label": "AD DC",
-              "icon": "activedirectory"
+              "icon": "activedirectory",
+              "ip": "10.0.0.10"
             },
             {
               "id": "dns_server",
               "label": "DNS Server",
-              "icon": "coredns"
+              "icon": "coredns",
+              "ip": "10.0.0.11"
             },
             {
               "id": "smtp_server",
               "label": "SMTP Server",
-              "icon": "smtp_server"
+              "icon": "smtp_server",
+              "ip": "10.0.0.12"
             },
             {
               "id": "jump_server",
               "label": "Jump Server\n(堡垒机)",
-              "icon": "server"
+              "icon": "server",
+              "ip": "10.0.0.13"
             }
           ]
         },
@@ -88,17 +96,23 @@
             {
               "id": "waf",
               "label": "WAF / 反代",
-              "icon": "waf"
+              "icon": "waf",
+              "ip": "10.8.1.10",
+              "image": "nginx:latest"
             },
             {
               "id": "app_server",
               "label": "应用服务器",
-              "icon": "server"
+              "icon": "server",
+              "ip": "10.8.1.11",
+              "image": "node:18-alpine"
             },
             {
               "id": "db_server",
               "label": "数据库服务器",
-              "icon": "server"
+              "icon": "server",
+              "ip": "10.8.1.12",
+              "image": "postgres:15"
             }
           ]
         },
@@ -109,12 +123,14 @@
             {
               "id": "office_switch",
               "label": "办公区接入交换机",
-              "icon": "switch"
+              "icon": "switch",
+              "ip": "10.16.1.1"
             },
             {
               "id": "pc",
               "label": "办公电脑",
-              "icon": "client"
+              "icon": "client",
+              "ip": "10.16.1.100"
             },
             {
               "id": "user",
@@ -132,17 +148,20 @@
         {
           "id": "visitor_firewall",
           "label": "访客区防火墙",
-          "icon": "firewall"
+          "icon": "firewall",
+          "ip": "172.16.0.1"
         },
         {
           "id": "portal",
           "label": "Portal认证",
-          "icon": "portal"
+          "icon": "portal",
+          "ip": "172.16.0.10"
         },
         {
           "id": "wifi_ap",
           "label": "WiFi AP",
-          "icon": "switch"
+          "icon": "switch",
+          "ip": "172.16.0.100"
         },
         {
           "id": "visitors",

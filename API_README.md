@@ -79,6 +79,18 @@ else:
 
 ## JSON配置格式
 
+### 节点配置
+
+每个节点可以包含以下字段：
+
+- `id`: 节点的唯一标识符（必需）
+- `label`: 节点的显示标签（必需）
+- `icon`: 节点的图标类型（必需）
+- `ip`: 节点的IP地址（可选）- 如果提供，将显示在节点标签下方
+- `image`: Docker镜像名称（可选）- 如果提供，将显示在IP地址下方
+
+### 配置示例
+
 ```json
 {
   "title": "企业网络拓扑",
@@ -104,6 +116,13 @@ else:
       "id": "internet",
       "label": "Internet",
       "icon": "internet"
+    },
+    {
+      "id": "web_server",
+      "label": "Web服务器",
+      "icon": "server",
+      "ip": "192.168.1.10",
+      "image": "nginx:latest"
     }
   ],
   
@@ -115,7 +134,9 @@ else:
         {
           "id": "server1",
           "label": "服务器",
-          "icon": "server"
+          "icon": "server",
+          "ip": "192.168.1.10",
+          "image": "ubuntu:20.04"
         }
       ]
     }
